@@ -386,3 +386,5 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/go,jetbrains,jetbrains+all,jetbrains+iml,linux,macos,sublimetext,vim,visualstudiocode,windows
 
 # Custom rules (everything added below won't be overriden by 'Generate .gitignore File' if you use 'Update' option)
+
+app/*
