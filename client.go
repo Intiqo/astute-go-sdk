@@ -39,6 +39,9 @@ func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetR
 </soap:Envelope>`,
 	)
 
+	st := strings.Split(params.StartTime.Format("15:04:05"), ":")
+	et := strings.Split(params.EndTime.Format("15:04:05"), ":")
+
 	templateData := struct {
 		AuthParams
 		UserParams
@@ -55,8 +58,8 @@ func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetR
 		ApiTransactionId: uuid.New().String(),
 		WeekdayTag:       getWeekdayTemplateForTime(params.StartTime),
 		TimesheetDate:    params.StartTime.Format("2006-01-02"),
-		StartTime:        fmt.Sprintf("%d%d", params.StartTime.Hour(), params.StartTime.Minute()),
-		EndTime:          fmt.Sprintf("%d%d", params.EndTime.Hour(), params.EndTime.Minute()),
+		StartTime:        fmt.Sprintf("%s%s", st[0], st[1]),
+		EndTime:          fmt.Sprintf("%s%s", et[0], et[1]),
 		BreakTime:        fmt.Sprintf("00%s", params.BreakTime),
 		Notes:            params.Notes,
 	}
@@ -76,13 +79,18 @@ func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetR
 	}
 
 	resText := result.Body.TimesheetSaveResponse.ParmsOut.Results.Text
+
+	if !strings.Contains(resText, "TSID:") {
+		return res, fmt.Errorf(resText)
+	}
+
 	tsId := resText[21:]
 
-	tsResult := SaveTimesheetResponse{
+	res = SaveTimesheetResponse{
 		TimesheetId: tsId,
 	}
 
-	return tsResult, nil
+	return res, nil
 }
 
 func (c astuteClient) SubmitTimesheet(params *SubmitTimesheetParams) (SaveTimesheetResponse, error) {
@@ -136,13 +144,17 @@ func (c astuteClient) SubmitTimesheet(params *SubmitTimesheetParams) (SaveTimesh
 	}
 
 	resText := result.Body.TimesheetSaveResponse.ParmsOut.Results.Text
-	tsId := resText[21:]
 
-	tsResult := SaveTimesheetResponse{
+	if !strings.Contains(resText, "TSID:") {
+		return res, fmt.Errorf(resText)
+	}
+
+	tsId := resText[21:]
+	res = SaveTimesheetResponse{
 		TimesheetId: tsId,
 	}
 
-	return tsResult, nil
+	return res, nil
 }
 
 func getWeekdayTemplateForTime(startTime time.Time) string {
