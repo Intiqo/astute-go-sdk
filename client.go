@@ -39,8 +39,29 @@ func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetR
 </soap:Envelope>`,
 	)
 
+	// Astute strictly requires that the start and end times be represented through 4 characters
+	// in the format HHMM. If the time is less than 4 characters, we need to pad it with 0s.
+	//
+	// See https://api.astutepayroll.com/webservice/documentation/#type_timesheetSave for more details
 	st := strings.Split(params.StartTime.Format("15:04:05"), ":")
+	startTime := fmt.Sprintf("%s%s", st[0], st[1])
 	et := strings.Split(params.EndTime.Format("15:04:05"), ":")
+	endTime := fmt.Sprintf("%s%s", et[0], et[1])
+
+	breakTime := "0000"
+
+	// Astute strictly requires that the break time be of 4 characters
+	//
+	// See https://api.astutepayroll.com/webservice/documentation/#type_timesheetSave for more details
+	if len(params.BreakTime) == 1 {
+		breakTime = fmt.Sprintf("000%s", params.BreakTime)
+	} else if len(params.BreakTime) == 2 {
+		breakTime = fmt.Sprintf("00%s", params.BreakTime)
+	} else if len(params.BreakTime) == 3 {
+		breakTime = fmt.Sprintf("0%s", params.BreakTime)
+	} else if len(params.BreakTime) == 4 {
+		breakTime = params.BreakTime
+	}
 
 	templateData := struct {
 		AuthParams
@@ -58,9 +79,9 @@ func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetR
 		ApiTransactionId: uuid.New().String(),
 		WeekdayTag:       getWeekdayTemplateForTime(params.StartTime),
 		TimesheetDate:    params.StartTime.Format("2006-01-02"),
-		StartTime:        fmt.Sprintf("%s%s", st[0], st[1]),
-		EndTime:          fmt.Sprintf("%s%s", et[0], et[1]),
-		BreakTime:        fmt.Sprintf("00%s", params.BreakTime),
+		StartTime:        startTime,
+		EndTime:          endTime,
+		BreakTime:        breakTime,
 		Notes:            params.Notes,
 	}
 
@@ -157,6 +178,7 @@ func (c astuteClient) SubmitTimesheet(params *SubmitTimesheetParams) (SaveTimesh
 	return res, nil
 }
 
+// Helps in identifying the weekday for the given time
 func getWeekdayTemplateForTime(startTime time.Time) string {
 	weekDay := startTime.Weekday()
 	weekDayTag := ""
