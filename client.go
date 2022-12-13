@@ -126,6 +126,7 @@ func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetR
     <api_transaction_id>{{.ApiTransactionId}}</api_transaction_id>
     <UID>{{.UID}}</UID>
     <user_id>{{.UserId}}</user_id>
+	<TSID>{{.TSID}}</TSID>
     <date>{{.TimesheetDate}}</date>
     <{{.WeekdayTag}}_start>{{.StartTime}}</{{.WeekdayTag}}_start>
     <{{.WeekdayTag}}_finish>{{.EndTime}}</{{.WeekdayTag}}_finish>
@@ -164,6 +165,7 @@ func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetR
 	templateData := struct {
 		AuthParams
 		UserParams
+		TSID             string
 		ApiTransactionId string
 		WeekdayTag       string
 		TimesheetDate    string
@@ -174,6 +176,7 @@ func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetR
 	}{
 		AuthParams:       c.AuthParams,
 		UserParams:       params.UserParams,
+		TSID:             params.TSID,
 		ApiTransactionId: uuid.New().String(),
 		WeekdayTag:       getWeekdayTemplateForTime(params.StartTime),
 		TimesheetDate:    params.StartTime.Format("2006-01-02"),

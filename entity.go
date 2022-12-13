@@ -476,6 +476,7 @@ type QueryTimesheetResponse struct {
 
 type SaveTimesheetParams struct {
 	UserParams
+	TSID      string
 	StartTime time.Time
 	EndTime   time.Time
 	BreakTime string
