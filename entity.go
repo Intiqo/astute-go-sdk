@@ -521,6 +521,7 @@ type SaveTimesheetResponse struct {
 
 type SubmitTimesheetParams struct {
 	UserParams
+	TSID           string
 	StartTime      time.Time
 	SubmissionTime time.Time
 }

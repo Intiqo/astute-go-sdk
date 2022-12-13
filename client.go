@@ -229,6 +229,7 @@ func (c astuteClient) SubmitTimesheet(params *SubmitTimesheetParams) (SaveTimesh
     <api_transaction_id>{{.ApiTransactionId}}</api_transaction_id>
     <UID>{{.UID}}</UID>
     <user_id>{{.UserId}}</user_id>
+	<TSID>{{.TSID}}</TSID>
     <date>{{.TimesheetDate}}</date>
     <complete>{{.SubmissionTime}}</complete>
   </tns:timesheetSave>
@@ -240,12 +241,14 @@ func (c astuteClient) SubmitTimesheet(params *SubmitTimesheetParams) (SaveTimesh
 	templateData := struct {
 		AuthParams
 		UserParams
+		TSID             string
 		ApiTransactionId string
 		TimesheetDate    string
 		SubmissionTime   string
 	}{
 		AuthParams:       c.AuthParams,
 		UserParams:       params.UserParams,
+		TSID:             params.TSID,
 		ApiTransactionId: uuid.New().String(),
 		TimesheetDate:    params.StartTime.Format("2006-01-02"),
 		SubmissionTime:   params.SubmissionTime.String(),
