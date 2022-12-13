@@ -6,6 +6,22 @@ import "fmt"
 //
 // See https://rhiannon-colleago.astutepayroll.info/rhiannon-colleago/api/ for API reference
 type Client interface {
+	// QueryTimesheet ... Query a timesheet
+	//
+	// You can use this to query a timesheet record using the following supported parameters
+	//
+	// - UID
+	//
+	//
+	QueryTimesheet(params QueryTimesheetParams) (QueryTimesheetResponse, error)
+	// QueryUser ... Query a user
+	//
+	// You can use this to query a user record using the following supported parameters
+	//
+	// - Job Code
+	//
+	//
+	QueryUser(params QueryUserParams) (QueryUserResponse, error)
 	// SaveTimesheet ... Save a timesheet
 	//
 	// Creates a new timesheet if none exists for the corresponding time period

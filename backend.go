@@ -58,7 +58,12 @@ func (b restApiBackend) Call(url string, ctx string, action string, requestBody 
 		return &clientResponse, err
 	}
 
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}(resp.Body)
 
 	if resp.StatusCode == http.StatusOK {
 		responseData, err := io.ReadAll(resp.Body)
@@ -93,7 +98,7 @@ func createTemplate(ctx string, t string, data interface{}) (string, error) {
 	return templateWithData.String(), nil
 }
 
-func ParseResponse[T AstuteEntity](data []byte, source T) (T, error) {
+func ParseResponse[T PayrollEntity](data []byte, source T) (T, error) {
 	var response T
 	reader := bytes.NewReader(data)
 	decoder := xml.NewDecoder(reader)

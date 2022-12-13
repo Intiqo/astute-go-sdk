@@ -14,6 +14,104 @@ type astuteClient struct {
 	AuthParams AuthParams
 }
 
+func (c astuteClient) QueryUser(params QueryUserParams) (QueryUserResponse, error) {
+	var res QueryUserResponse
+
+	reqTemplate := strings.TrimSpace(
+		`<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="urn:tsoIntegrator" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<soap:Body>
+<q1:UserQuery xmlns:q1="urn:UserQuery">
+  <tns:userGet>
+    <api_key>{{.ApiKey}}</api_key>
+    <api_username>{{.ApiUsername}}</api_username>
+    <api_password>{{.ApiPassword}}</api_password>
+    <query>job_code like '%{{.JobCode}}%'</query>
+  </tns:userGet>
+</q1:UserQuery>
+</soap:Body>
+</soap:Envelope>`,
+	)
+
+	templateData := struct {
+		AuthParams
+		QueryUserParams
+	}{
+		AuthParams:      c.AuthParams,
+		QueryUserParams: params,
+	}
+
+	resp, err := c.B.Call(c.AuthParams.ApiUrl, "UserQuery", "urn:UserQuery", reqTemplate, templateData)
+	if err != nil {
+		return res, err
+	}
+
+	if resp.Code != http.StatusOK {
+		return res, fmt.Errorf("response is not OK")
+	}
+
+	result, err := ParseResponse(resp.Data, queryUserXmlResponse{})
+	if err != nil {
+		return res, nil
+	}
+
+	xmlUsers := result.Body.UserQueryResponse.ParmsOut.Results.Text
+	res, err = ParseResponse([]byte(xmlUsers), QueryUserResponse{})
+	if err != nil {
+		return res, nil
+	}
+
+	return res, nil
+}
+
+func (c astuteClient) QueryTimesheet(params QueryTimesheetParams) (QueryTimesheetResponse, error) {
+	var res QueryTimesheetResponse
+
+	reqTemplate := strings.TrimSpace(
+		`<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="urn:tsoIntegrator" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<soap:Body>
+<q1:TimesheetQuery xmlns:q1="urn:TimesheetQuery">
+  <tns:userGet>
+    <api_key>{{.ApiKey}}</api_key>
+    <api_username>{{.ApiUsername}}</api_username>
+    <api_password>{{.ApiPassword}}</api_password>
+    <query>UID = '{{.UID}}'</query>
+  </tns:userGet>
+</q1:TimesheetQuery>
+</soap:Body>
+</soap:Envelope>`,
+	)
+
+	templateData := struct {
+		AuthParams
+		QueryTimesheetParams
+	}{
+		AuthParams:           c.AuthParams,
+		QueryTimesheetParams: params,
+	}
+
+	resp, err := c.B.Call(c.AuthParams.ApiUrl, "TimesheetQuery", "urn:TimesheetQuery", reqTemplate, templateData)
+	if err != nil {
+		return res, err
+	}
+
+	if resp.Code != http.StatusOK {
+		return res, fmt.Errorf("response is not OK")
+	}
+
+	result, err := ParseResponse(resp.Data, queryTimesheetXmlResponse{})
+	if err != nil {
+		return res, nil
+	}
+
+	xmlUsers := result.Body.TimesheetQueryResponse.ParmsOut.Results.Text
+	res, err = ParseResponse([]byte(xmlUsers), QueryTimesheetResponse{})
+	if err != nil {
+		return res, nil
+	}
+
+	return res, nil
+}
+
 func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetResponse, error) {
 	var res SaveTimesheetResponse
 
