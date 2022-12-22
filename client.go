@@ -63,7 +63,7 @@ func (c astuteClient) QueryUser(params QueryUserParams) (QueryUserResponse, erro
 	return res, nil
 }
 
-func (c astuteClient) QueryTimesheet(params QueryTimesheetParams) (QueryTimesheetResponse, error) {
+func (c astuteClient) QueryTimesheetByJob(params QueryTimesheetParams) (QueryTimesheetResponse, error) {
 	var res QueryTimesheetResponse
 
 	reqTemplate := strings.TrimSpace(
@@ -87,6 +87,55 @@ func (c astuteClient) QueryTimesheet(params QueryTimesheetParams) (QueryTimeshee
 	}{
 		AuthParams:           c.AuthParams,
 		QueryTimesheetParams: params,
+	}
+
+	resp, err := c.B.Call(c.AuthParams.ApiUrl, "TimesheetQuery", "urn:TimesheetQuery", reqTemplate, templateData)
+	if err != nil {
+		return res, err
+	}
+
+	if resp.Code != http.StatusOK {
+		return res, fmt.Errorf("response is not OK")
+	}
+
+	result, err := ParseResponse(resp.Data, queryTimesheetXmlResponse{})
+	if err != nil {
+		return res, nil
+	}
+
+	xmlUsers := result.Body.TimesheetQueryResponse.ParmsOut.Results.Text
+	res, err = ParseResponse([]byte(xmlUsers), QueryTimesheetResponse{})
+	if err != nil {
+		return res, nil
+	}
+
+	return res, nil
+}
+
+func (c astuteClient) QueryTimesheetById(id string) (QueryTimesheetResponse, error) {
+	var res QueryTimesheetResponse
+
+	reqTemplate := strings.TrimSpace(
+		`<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="urn:tsoIntegrator" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<soap:Body>
+<q1:TimesheetQuery xmlns:q1="urn:TimesheetQuery">
+  <tns:userGet>
+    <api_key>{{.ApiKey}}</api_key>
+    <api_username>{{.ApiUsername}}</api_username>
+    <api_password>{{.ApiPassword}}</api_password>
+    <query>TSID = '{{.TSID}}'</query>
+  </tns:userGet>
+</q1:TimesheetQuery>
+</soap:Body>
+</soap:Envelope>`,
+	)
+
+	templateData := struct {
+		AuthParams
+		TSID string
+	}{
+		AuthParams: c.AuthParams,
+		TSID:       id,
 	}
 
 	resp, err := c.B.Call(c.AuthParams.ApiUrl, "TimesheetQuery", "urn:TimesheetQuery", reqTemplate, templateData)
