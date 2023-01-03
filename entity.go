@@ -476,11 +476,12 @@ type QueryTimesheetResponse struct {
 
 type SaveTimesheetParams struct {
 	UserParams
-	TSID      string
-	StartTime time.Time
-	EndTime   time.Time
-	BreakTime string
-	Notes     string
+	TSID       string
+	StartTime  time.Time
+	EndTime    time.Time
+	BreakTime  string
+	Notes      string
+	DidNotWork bool
 }
 
 type saveTimesheetXmlResponse struct {
