@@ -169,6 +169,17 @@ func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetR
 
 	// If the timesheet is marked as "Did not work", use the appropriate template
 	if params.DidNotWork {
+		templateData := struct {
+			AuthParams
+			UserParams
+			TSID             string
+			ApiTransactionId string
+		}{
+			AuthParams:       c.AuthParams,
+			UserParams:       params.UserParams,
+			TSID:             params.TSID,
+			ApiTransactionId: uuid.New().String(),
+		}
 		reqTemplate = strings.TrimSpace(
 			`<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="urn:tsoIntegrator" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 <soap:Body>
@@ -187,7 +198,7 @@ func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetR
 </soap:Body>
 </soap:Envelope>`,
 		)
-		resp, err = c.B.Call(c.AuthParams.ApiUrl, "TimesheetSave", "urn:TimesheetSave", reqTemplate, nil)
+		resp, err = c.B.Call(c.AuthParams.ApiUrl, "TimesheetSave", "urn:TimesheetSave", reqTemplate, templateData)
 		if err != nil {
 			return res, err
 		}
