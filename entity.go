@@ -372,7 +372,7 @@ type queryTimesheetXmlResponse struct {
 type QueryTimesheetResponse struct {
 	XMLName xml.Name `xml:"users"`
 	Text    string   `xml:",chardata"`
-	User    struct {
+	User    []struct {
 		Text                           string `xml:",chardata"`
 		TSID                           string `xml:"TSID"`
 		UID                            string `xml:"UID"`
