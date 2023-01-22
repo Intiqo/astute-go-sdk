@@ -6,9 +6,41 @@ import (
 )
 
 type PayrollEntity interface {
-	queryUserXmlResponse | QueryUserResponse |
-		queryTimesheetXmlResponse | QueryTimesheetResponse |
-		saveTimesheetXmlResponse
+	faultResponse | queryUserXmlResponse | QueryUserResponse |
+	queryTimesheetXmlResponse | QueryTimesheetResponse |
+	saveTimesheetXmlResponse
+}
+
+type faultResponse struct {
+	XMLName       xml.Name `xml:"Envelope"`
+	Text          string   `xml:",chardata"`
+	EncodingStyle string   `xml:"encodingStyle,attr"`
+	SOAPENV       string   `xml:"SOAP-ENV,attr"`
+	Xsd           string   `xml:"xsd,attr"`
+	Xsi           string   `xml:"xsi,attr"`
+	SOAPENC       string   `xml:"SOAP-ENC,attr"`
+	Body          struct {
+		Text  string `xml:",chardata"`
+		Fault struct {
+			Text      string `xml:",chardata"`
+			Faultcode struct {
+				Text string `xml:",chardata"`
+				Type string `xml:"type,attr"`
+			} `xml:"faultcode"`
+			Faultactor struct {
+				Text string `xml:",chardata"`
+				Type string `xml:"type,attr"`
+			} `xml:"faultactor"`
+			Faultstring struct {
+				Text string `xml:",chardata"`
+				Type string `xml:"type,attr"`
+			} `xml:"faultstring"`
+			Detail struct {
+				Text string `xml:",chardata"`
+				Type string `xml:"type,attr"`
+			} `xml:"detail"`
+		} `xml:"Fault"`
+	} `xml:"Body"`
 }
 
 type UserParams struct {

@@ -46,7 +46,12 @@ func (c astuteClient) QueryUser(params QueryUserParams) (QueryUserResponse, erro
 	}
 
 	if resp.Code != http.StatusOK {
-		return res, fmt.Errorf("response is not OK")
+		result, err := ParseResponse(resp.Data, faultResponse{})
+		if err != nil {
+			return res, nil
+		}
+		resText := result.Body.Fault.Faultstring.Text
+		return res, fmt.Errorf(resText)
 	}
 
 	result, err := ParseResponse(resp.Data, queryUserXmlResponse{})
@@ -95,7 +100,12 @@ func (c astuteClient) QueryTimesheetByJob(params QueryTimesheetParams) (QueryTim
 	}
 
 	if resp.Code != http.StatusOK {
-		return res, fmt.Errorf("response is not OK")
+		result, err := ParseResponse(resp.Data, faultResponse{})
+		if err != nil {
+			return res, nil
+		}
+		resText := result.Body.Fault.Faultstring.Text
+		return res, fmt.Errorf(resText)
 	}
 
 	result, err := ParseResponse(resp.Data, queryTimesheetXmlResponse{})
@@ -144,7 +154,12 @@ func (c astuteClient) QueryTimesheetById(id string) (QueryTimesheetResponse, err
 	}
 
 	if resp.Code != http.StatusOK {
-		return res, fmt.Errorf("response is not OK")
+		result, err := ParseResponse(resp.Data, faultResponse{})
+		if err != nil {
+			return res, nil
+		}
+		resText := result.Body.Fault.Faultstring.Text
+		return res, fmt.Errorf(resText)
 	}
 
 	result, err := ParseResponse(resp.Data, queryTimesheetXmlResponse{})
@@ -280,7 +295,12 @@ func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetR
 	}
 
 	if resp.Code != http.StatusOK {
-		return res, fmt.Errorf("response is not OK")
+		result, err := ParseResponse(resp.Data, faultResponse{})
+		if err != nil {
+			return res, nil
+		}
+		resText := result.Body.Fault.Faultstring.Text
+		return res, fmt.Errorf(resText)
 	}
 
 	result, err := ParseResponse(resp.Data, saveTimesheetXmlResponse{})
@@ -348,7 +368,12 @@ func (c astuteClient) SubmitTimesheet(params *SubmitTimesheetParams) (SaveTimesh
 	}
 
 	if resp.Code != http.StatusOK {
-		return res, fmt.Errorf("response is not OK")
+		result, err := ParseResponse(resp.Data, faultResponse{})
+		if err != nil {
+			return res, nil
+		}
+		resText := result.Body.Fault.Faultstring.Text
+		return res, fmt.Errorf(resText)
 	}
 
 	result, err := ParseResponse(resp.Data, saveTimesheetXmlResponse{})

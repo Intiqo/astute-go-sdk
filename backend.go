@@ -65,23 +65,14 @@ func (b restApiBackend) Call(url string, ctx string, action string, requestBody 
 		}
 	}(resp.Body)
 
-	if resp.StatusCode == http.StatusOK {
-		responseData, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return &clientResponse, err
-		}
-		clientResponse = ClientResponse{
-			Code: resp.StatusCode,
-			Data: responseData,
-		}
-		return &clientResponse, nil
+	responseData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return &clientResponse, err
 	}
-
 	clientResponse = ClientResponse{
 		Code: resp.StatusCode,
-		Data: nil,
+		Data: responseData,
 	}
-
 	return &clientResponse, nil
 }
 
