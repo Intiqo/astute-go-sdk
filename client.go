@@ -231,38 +231,64 @@ func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetR
     <user_id>{{.UserId}}</user_id>
 	<TSID>{{.TSID}}</TSID>
     <date>{{.TimesheetDate}}</date>
-    <{{.WeekdayTag}}_start>{{.StartTime}}</{{.WeekdayTag}}_start>
-    <{{.WeekdayTag}}_finish>{{.EndTime}}</{{.WeekdayTag}}_finish>
-    <{{.WeekdayTag}}_break>{{.BreakTime}}</{{.WeekdayTag}}_break>
-    <{{.WeekdayTag}}_notes>{{.Notes}}</{{.WeekdayTag}}_notes>
+		{{range $key, $value := .Days}}
+			<{{.WeekdayTag}}_start>{{.StartTime}}</{{.WeekdayTag}}_start>
+			<{{.WeekdayTag}}_finish>{{.EndTime}}</{{.WeekdayTag}}_finish>
+			<{{.WeekdayTag}}_break>{{.BreakTime}}</{{.WeekdayTag}}_break>
+			<{{.WeekdayTag}}_notes>{{.Notes}}</{{.WeekdayTag}}_notes>
+		{{end}}
+		{{if .Submit}}
+			<complete>{{.SubmissionTime}}</complete>
+		{{end}}
   </tns:timesheetSave>
 </q1:TimesheetSave>
 </soap:Body>
 </soap:Envelope>`,
 		)
 
-		// Astute strictly requires that the start and end times be represented through 4 characters
-		// in the format HHMM. If the time is less than 4 characters, we need to pad it with 0s.
-		//
-		// See https://api.astutepayroll.com/webservice/documentation/#type_timesheetSave for more details
-		st := strings.Split(params.StartTime.Format("15:04:05"), ":")
-		startTime := fmt.Sprintf("%s%s", st[0], st[1])
-		et := strings.Split(params.EndTime.Format("15:04:05"), ":")
-		endTime := fmt.Sprintf("%s%s", et[0], et[1])
+		days := make([]SaveTimesheetDayTemplateParams, 0)
+		tsStartTime := params.Days[0].StartTime
+		for _, day := range params.Days {
+			// Astute strictly requires that the start and end times be represented through 4 characters
+			// in the format HHMM. If the time is less than 4 characters, we need to pad it with 0s.
+			//
+			// See https://api.astutepayroll.com/webservice/documentation/#type_timesheetSave for more details
+			st := strings.Split(day.StartTime.Format("15:04:05"), ":")
+			startTime := fmt.Sprintf("%s%s", st[0], st[1])
+			et := strings.Split(day.EndTime.Format("15:04:05"), ":")
+			endTime := fmt.Sprintf("%s%s", et[0], et[1])
 
-		breakTime := "0000"
+			breakTime := "0000"
 
-		// Astute strictly requires that the break time be of 4 characters
-		//
-		// See https://api.astutepayroll.com/webservice/documentation/#type_timesheetSave for more details
-		if len(params.BreakTime) == 1 {
-			breakTime = fmt.Sprintf("000%s", params.BreakTime)
-		} else if len(params.BreakTime) == 2 {
-			breakTime = fmt.Sprintf("00%s", params.BreakTime)
-		} else if len(params.BreakTime) == 3 {
-			breakTime = fmt.Sprintf("0%s", params.BreakTime)
-		} else if len(params.BreakTime) == 4 {
-			breakTime = params.BreakTime
+			// Astute strictly requires that the break time be of 4 characters
+			//
+			// See https://api.astutepayroll.com/webservice/documentation/#type_timesheetSave for more details
+			if len(day.BreakTime) == 1 {
+				breakTime = fmt.Sprintf("000%s", day.BreakTime)
+			} else if len(day.BreakTime) == 2 {
+				breakTime = fmt.Sprintf("00%s", day.BreakTime)
+			} else if len(day.BreakTime) == 3 {
+				breakTime = fmt.Sprintf("0%s", day.BreakTime)
+			} else if len(day.BreakTime) == 4 {
+				breakTime = day.BreakTime
+			}
+
+			days = append(days, SaveTimesheetDayTemplateParams{
+				WeekdayTag: getWeekdayTemplateForTime(day.StartTime),
+				StartTime:  startTime,
+				EndTime:    endTime,
+				BreakTime:  breakTime,
+				Notes:      day.Notes,
+			})
+
+			if day.StartTime.Before(tsStartTime) {
+				tsStartTime = day.StartTime
+			}
+		}
+
+		submissionTime := time.Now()
+		if params.Submit && !params.SubmissionTime.IsZero() {
+			submissionTime = params.SubmissionTime
 		}
 
 		templateData := struct {
@@ -270,23 +296,19 @@ func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetR
 			UserParams
 			TSID             string
 			ApiTransactionId string
-			WeekdayTag       string
 			TimesheetDate    string
-			StartTime        string
-			EndTime          string
-			BreakTime        string
-			Notes            string
+			Days             []SaveTimesheetDayTemplateParams
+			Submit           bool
+			SubmissionTime   string
 		}{
 			AuthParams:       c.AuthParams,
 			UserParams:       params.UserParams,
 			TSID:             params.TSID,
 			ApiTransactionId: uuid.New().String(),
-			WeekdayTag:       getWeekdayTemplateForTime(params.StartTime),
-			TimesheetDate:    params.StartTime.Format("2006-01-02"),
-			StartTime:        startTime,
-			EndTime:          endTime,
-			BreakTime:        breakTime,
-			Notes:            params.Notes,
+			TimesheetDate:    tsStartTime.Format("2006-01-02"),
+			Days:             days,
+			Submit:           params.Submit,
+			SubmissionTime:   submissionTime.String(),
 		}
 		resp, err = c.B.Call(c.AuthParams.ApiUrl, "TimesheetSave", "urn:TimesheetSave", reqTemplate, templateData)
 		if err != nil {

@@ -7,8 +7,8 @@ import (
 
 type PayrollEntity interface {
 	faultResponse | queryUserXmlResponse | QueryUserResponse |
-	queryTimesheetXmlResponse | QueryTimesheetResponse |
-	saveTimesheetXmlResponse
+		queryTimesheetXmlResponse | QueryTimesheetResponse |
+		saveTimesheetXmlResponse
 }
 
 type faultResponse struct {
@@ -506,14 +506,28 @@ type QueryTimesheetResponse struct {
 
 // Entities related to SaveTimesheet
 
+type SaveTimesheetDayParams struct {
+	StartTime time.Time
+	EndTime   time.Time
+	BreakTime string
+	Notes     string
+}
+
 type SaveTimesheetParams struct {
 	UserParams
-	TSID       string
-	StartTime  time.Time
-	EndTime    time.Time
+	TSID           string
+	Days           []SaveTimesheetDayParams
+	DidNotWork     bool
+	Submit         bool
+	SubmissionTime time.Time
+}
+
+type SaveTimesheetDayTemplateParams struct {
+	WeekdayTag string
+	StartTime  string
+	EndTime    string
 	BreakTime  string
 	Notes      string
-	DidNotWork bool
 }
 
 type saveTimesheetXmlResponse struct {
