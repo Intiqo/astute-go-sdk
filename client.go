@@ -1,6 +1,8 @@
 package astute
 
 import (
+	"bytes"
+	"encoding/xml"
 	"fmt"
 	"net/http"
 	"strings"
@@ -273,12 +275,14 @@ func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetR
 				breakTime = day.BreakTime
 			}
 
+			buf := new(bytes.Buffer)
+			_ = xml.EscapeText(buf, []byte(day.Notes))
 			days = append(days, SaveTimesheetDayTemplateParams{
 				WeekdayTag: getWeekdayTemplateForTime(day.StartTime),
 				StartTime:  startTime,
 				EndTime:    endTime,
 				BreakTime:  breakTime,
-				Notes:      day.Notes,
+				Notes:      buf.String(),
 			})
 
 			if day.StartTime.Before(tsStartTime) {
