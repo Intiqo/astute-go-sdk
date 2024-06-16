@@ -1,4 +1,4 @@
-module github.com/adwitiyaio/astute-go-sdk
+module github.com/Intiqo/astute-go-sdk
 
 go 1.18
 
