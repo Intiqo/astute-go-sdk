@@ -1,4 +1,4 @@
-## Overview
+# Overview
 
 This is an unofficial Golang SDK to integrate with the Astute Payroll system (SOAP APIs)
 
@@ -6,11 +6,11 @@ This is an unofficial Golang SDK to integrate with the Astute Payroll system (SO
 
 ### Latest Version
 
-`go get github.com/adwitiyaio/astute-go-sdk`
+`go get github.com/Intiqo/astute-go-sdk`
 
 ### Specific Version
 
-`go get github.com/adwitiyaio/astute-go-sdk@v0.1.2`
+`go get github.com/Intiqo/astute-go-sdk@v0.1.2`
 
 ## Authentication / Obtaining a client
 
