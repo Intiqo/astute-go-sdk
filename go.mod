@@ -1,6 +1,6 @@
 module github.com/Intiqo/astute-go-sdk
 
-go 1.18
+go 1.22
 
 require (
 	golang.org/x/net v0.23.0
