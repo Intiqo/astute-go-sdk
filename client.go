@@ -239,6 +239,7 @@ func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetR
 			<{{.WeekdayTag}}_break>{{.BreakTime}}</{{.WeekdayTag}}_break>
 			<{{.WeekdayTag}}_notes>{{.Notes}}</{{.WeekdayTag}}_notes>
 		{{end}}
+		{{if .Notes}}<notes>{{.Notes}}</notes>{{end}}
 		{{if .Submit}}
 			<complete>{{.SubmissionTime}}</complete>
 		{{end}}
@@ -304,6 +305,7 @@ func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetR
 			Days             []SaveTimesheetDayTemplateParams
 			Submit           bool
 			SubmissionTime   string
+			Notes            string
 		}{
 			AuthParams:       c.AuthParams,
 			UserParams:       params.UserParams,
@@ -313,6 +315,7 @@ func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetR
 			Days:             days,
 			Submit:           params.Submit,
 			SubmissionTime:   submissionTime.String(),
+			Notes:            params.Notes,
 		}
 		resp, err = c.B.Call(c.AuthParams.ApiUrl, "TimesheetSave", "urn:TimesheetSave", reqTemplate, templateData)
 		if err != nil {

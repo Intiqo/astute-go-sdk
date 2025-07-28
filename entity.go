@@ -520,6 +520,7 @@ type SaveTimesheetParams struct {
 	DidNotWork     bool
 	Submit         bool
 	SubmissionTime time.Time
+	Notes          string
 }
 
 type SaveTimesheetDayTemplateParams struct {
