@@ -369,6 +369,7 @@ func (c astuteClient) SubmitTimesheet(params *SubmitTimesheetParams) (SaveTimesh
 	<TSID>{{.TSID}}</TSID>
     <date>{{.TimesheetDate}}</date>
     <complete>{{.SubmissionTime}}</complete>
+		<trigger_approval_email›1</trigger_approval_email>
   </tns:timesheetSave>
 </q1:TimesheetSave>
 </soap:Body>
