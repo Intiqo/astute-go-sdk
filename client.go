@@ -242,7 +242,7 @@ func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetR
 		{{if .Notes}}<notes>{{.Notes}}</notes>{{end}}
 		{{if .Submit}}
 			<complete>{{.SubmissionTime}}</complete>
-			<trigger_approval_email›1</trigger_approval_email>
+			<trigger_approval_email>1</trigger_approval_email>
 		{{end}}
   </tns:timesheetSave>
 </q1:TimesheetSave>
@@ -346,79 +346,6 @@ func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetR
 
 	tsId := resText[21:]
 
-	res = SaveTimesheetResponse{
-		TimesheetId: tsId,
-	}
-
-	return res, nil
-}
-
-func (c astuteClient) SubmitTimesheet(params *SubmitTimesheetParams) (SaveTimesheetResponse, error) {
-	var res SaveTimesheetResponse
-
-	reqTemplate := strings.TrimSpace(
-		`<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="urn:tsoIntegrator" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-<soap:Body>
-<q1:TimesheetSave xmlns:q1="urn:TimesheetSave">
-  <tns:timesheetSave>
-    <api_key>{{.ApiKey}}</api_key>
-    <api_username>{{.ApiUsername}}</api_username>
-    <api_password>{{.ApiPassword}}</api_password>
-    <api_transaction_id>{{.ApiTransactionId}}</api_transaction_id>
-    <UID>{{.UID}}</UID>
-    <user_id>{{.UserId}}</user_id>
-	<TSID>{{.TSID}}</TSID>
-    <date>{{.TimesheetDate}}</date>
-    <complete>{{.SubmissionTime}}</complete>
-		<trigger_approval_email›1</trigger_approval_email>
-  </tns:timesheetSave>
-</q1:TimesheetSave>
-</soap:Body>
-</soap:Envelope>`,
-	)
-
-	templateData := struct {
-		AuthParams
-		UserParams
-		TSID             string
-		ApiTransactionId string
-		TimesheetDate    string
-		SubmissionTime   string
-	}{
-		AuthParams:       c.AuthParams,
-		UserParams:       params.UserParams,
-		TSID:             params.TSID,
-		ApiTransactionId: uuid.New().String(),
-		TimesheetDate:    params.StartTime.Format("2006-01-02"),
-		SubmissionTime:   params.SubmissionTime.String(),
-	}
-
-	resp, err := c.B.Call(c.AuthParams.ApiUrl, "TimesheetSave", "urn:TimesheetSave", reqTemplate, templateData)
-	if err != nil {
-		return res, err
-	}
-
-	if resp.Code != http.StatusOK {
-		result, err := ParseResponse(resp.Data, faultResponse{})
-		if err != nil {
-			return res, nil
-		}
-		resText := result.Body.Fault.Faultstring.Text
-		return res, fmt.Errorf(resText)
-	}
-
-	result, err := ParseResponse(resp.Data, saveTimesheetXmlResponse{})
-	if err != nil {
-		return res, nil
-	}
-
-	resText := result.Body.TimesheetSaveResponse.ParmsOut.Results.Text
-
-	if !strings.Contains(resText, "TSID:") {
-		return res, fmt.Errorf(resText)
-	}
-
-	tsId := resText[21:]
 	res = SaveTimesheetResponse{
 		TimesheetId: tsId,
 	}

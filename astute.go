@@ -29,9 +29,6 @@ type Client interface {
 	// Creates a new timesheet if none exists for the corresponding time period
 	//
 	SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetResponse, error)
-
-	// SubmitTimesheet ... Submit a filled timesheet
-	SubmitTimesheet(params *SubmitTimesheetParams) (SaveTimesheetResponse, error)
 }
 
 func NewClient(params AuthParams) (Client, error) {
