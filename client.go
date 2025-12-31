@@ -302,23 +302,25 @@ func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetR
 		templateData := struct {
 			AuthParams
 			UserParams
-			TSID             string
-			ApiTransactionId string
-			TimesheetDate    string
-			Days             []SaveTimesheetDayTemplateParams
-			Submit           bool
-			SubmissionTime   string
-			Notes            string
+			TSID                 string
+			ApiTransactionId     string
+			TimesheetDate        string
+			Days                 []SaveTimesheetDayTemplateParams
+			Submit               bool
+			SubmissionTime       string
+			Notes                string
+			TriggerApprovalEmail bool
 		}{
-			AuthParams:       c.AuthParams,
-			UserParams:       params.UserParams,
-			TSID:             params.TSID,
-			ApiTransactionId: uuid.New().String(),
-			TimesheetDate:    tsStartTime.Format("2006-01-02"),
-			Days:             days,
-			Submit:           params.Submit,
-			SubmissionTime:   submissionTime.String(),
-			Notes:            params.Notes,
+			AuthParams:           c.AuthParams,
+			UserParams:           params.UserParams,
+			TSID:                 params.TSID,
+			ApiTransactionId:     uuid.New().String(),
+			TimesheetDate:        tsStartTime.Format("2006-01-02"),
+			Days:                 days,
+			Submit:               params.Submit,
+			SubmissionTime:       submissionTime.String(),
+			Notes:                params.Notes,
+			TriggerApprovalEmail: params.TriggerApprovalEmail,
 		}
 		resp, err = c.B.Call(c.AuthParams.ApiUrl, "TimesheetSave", "urn:TimesheetSave", reqTemplate, templateData)
 		if err != nil {
