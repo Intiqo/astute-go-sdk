@@ -515,12 +515,13 @@ type SaveTimesheetDayParams struct {
 
 type SaveTimesheetParams struct {
 	UserParams
-	TSID           string
-	Days           []SaveTimesheetDayParams
-	DidNotWork     bool
-	Submit         bool
-	SubmissionTime time.Time
-	Notes          string
+	TSID                 string
+	Days                 []SaveTimesheetDayParams
+	DidNotWork           bool
+	Submit               bool
+	SubmissionTime       time.Time
+	Notes                string
+	TriggerApprovalEmail bool
 }
 
 type SaveTimesheetDayTemplateParams struct {

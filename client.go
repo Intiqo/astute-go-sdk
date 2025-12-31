@@ -242,7 +242,9 @@ func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetR
 		{{if .Notes}}<notes>{{.Notes}}</notes>{{end}}
 		{{if .Submit}}
 			<complete>{{.SubmissionTime}}</complete>
-			<trigger_approval_email>1</trigger_approval_email>
+			{{if .TriggerApprovalEmail}}
+				<trigger_approval_email>1</trigger_approval_email>
+			{{end}}
 		{{end}}
   </tns:timesheetSave>
 </q1:TimesheetSave>
