@@ -29,6 +29,26 @@ type Client interface {
 	// Creates a new timesheet if none exists for the corresponding time period
 	//
 	SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetResponse, error)
+	// QueryTimesheetShift ... Query shifts for a given timesheet by TSID
+	//
+	// Queries shifts for a given timesheet by TSID. You can use this to query shifts for a timesheet record using the following supported parameters
+	//
+	QueryTimesheetShift(params QueryTimesheetShiftParams) (QueryTimesheetShiftResponse, error)
+	// AddTimesheetShift ... Add a shift to an existing timesheet
+	//
+	// Adds a shift. You can use this to add a shift to an existing timesheet record using the following supported parameters
+	//
+	AddTimesheetShift(params *AddTimesheetShiftParams) (AddTimesheetShiftResponse, error)
+	// DeleteTimesheetShift ... Delete a shift from a timesheet by TS_SID
+	//
+	// Deletes a shift from a timesheet by TS_SID. You can use this to delete a shift from a timesheet record using the following supported parameters
+	//
+	DeleteTimesheetShift(params DeleteTimesheetShiftParams) error
+	// ApproveTimesheet ... Approve a timesheet. Once approved, a timesheet cannot be updated.
+	//
+	// Approves a timesheet. Once approved, a timesheet cannot be updated. You can use this to approve a timesheet record using the following supported parameters
+	//
+	ApproveTimesheet(params ApproveTimesheetParams) error
 }
 
 func NewClient(params AuthParams) (Client, error) {

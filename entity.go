@@ -8,7 +8,10 @@ import (
 type PayrollEntity interface {
 	faultResponse | queryUserXmlResponse | QueryUserResponse |
 		queryTimesheetXmlResponse | QueryTimesheetResponse |
-		saveTimesheetXmlResponse
+		saveTimesheetXmlResponse |
+		queryTimesheetShiftXmlResponse | QueryTimesheetShiftResponse |
+		addTimesheetShiftXmlResponse | deleteTimesheetShiftXmlResponse |
+		approveTimesheetXmlResponse
 }
 
 type faultResponse struct {
@@ -573,4 +576,184 @@ type SubmitTimesheetParams struct {
 	TSID           string
 	StartTime      time.Time
 	SubmissionTime time.Time
+}
+
+// Entities related to TimesheetQueryShift
+type QueryTimesheetShiftParams struct {
+	TSID string
+}
+
+type queryTimesheetShiftXmlResponse struct {
+	XMLName       xml.Name `xml:"Envelope"`
+	Text          string   `xml:",chardata"`
+	EncodingStyle string   `xml:"encodingStyle,attr"`
+	SOAPENV       string   `xml:"SOAP-ENV,attr"`
+	Xsd           string   `xml:"xsd,attr"`
+	Xsi           string   `xml:"xsi,attr"`
+	SOAPENC       string   `xml:"SOAP-ENC,attr"`
+	Tns           string   `xml:"tns,attr"`
+	Body          struct {
+		Text                        string `xml:",chardata"`
+		TimesheetQueryShiftResponse struct {
+			Text     string `xml:",chardata"`
+			Ns1      string `xml:"ns1,attr"`
+			ParmsOut struct {
+				Text       string `xml:",chardata"`
+				Type       string `xml:"type,attr"`
+				ResultCode struct {
+					Text string `xml:",chardata"`
+					Type string `xml:"type,attr"`
+				} `xml:"ResultCode"`
+				Results struct {
+					Text string `xml:",chardata"`
+					Type string `xml:"type,attr"`
+				} `xml:"Results"`
+			} `xml:"parms_out"`
+		} `xml:"TimesheetQueryShiftResponse"`
+	} `xml:"Body"`
+}
+
+type QueryTimesheetShiftResponse struct {
+	XMLName xml.Name `xml:"shifts"`
+	Text    string   `xml:",chardata"`
+	Shift   []struct {
+		Text    string `xml:",chardata"`
+		TSSID   string `xml:"TS_SID"`
+		TSID    string `xml:"TSID"`
+		Date    string `xml:"date"`
+		Start   string `xml:"start"`
+		Finish  string `xml:"finish"`
+		Break   string `xml:"break"`
+		Notes   string `xml:"notes"`
+		PCID    string `xml:"PCID"`
+		JobCode string `xml:"job_code"`
+	} `xml:"shift"`
+}
+
+// Entities related to TimesheetAddShift
+
+type AddTimesheetShiftParams struct {
+	UserParams
+	TSID      string
+	Date      string    // ISO8601 YYYY-MM-DD
+	StartTime time.Time // formatted to HHMM internally
+	EndTime   time.Time // formatted to HHMM internally
+	BreakTime string    // padded to 4 chars internally
+	Notes     string
+	PCID      string // optional pay item ID
+	JobCode   string // optional
+}
+
+type addTimesheetShiftXmlResponse struct {
+	XMLName       xml.Name `xml:"Envelope"`
+	Text          string   `xml:",chardata"`
+	EncodingStyle string   `xml:"encodingStyle,attr"`
+	SOAPENV       string   `xml:"SOAP-ENV,attr"`
+	Xsd           string   `xml:"xsd,attr"`
+	Xsi           string   `xml:"xsi,attr"`
+	SOAPENC       string   `xml:"SOAP-ENC,attr"`
+	Tns           string   `xml:"tns,attr"`
+	Body          struct {
+		Text                      string `xml:",chardata"`
+		TimesheetAddShiftResponse struct {
+			Text     string `xml:",chardata"`
+			Ns1      string `xml:"ns1,attr"`
+			ParmsOut struct {
+				Text       string `xml:",chardata"`
+				Type       string `xml:"type,attr"`
+				ResultCode struct {
+					Text string `xml:",chardata"`
+					Type string `xml:"type,attr"`
+				} `xml:"ResultCode"`
+				Results struct {
+					Text string `xml:",chardata"`
+					Type string `xml:"type,attr"`
+				} `xml:"Results"`
+			} `xml:"parms_out"`
+		} `xml:"TimesheetAddShiftResponse"`
+	} `xml:"Body"`
+}
+
+type AddTimesheetShiftResponse struct {
+	ShiftId string
+}
+
+// Entities related to TimesheetDeleteShift
+
+type DeleteTimesheetShiftParams struct {
+	TSID  string
+	TSSID string // TS_SID — the specific shift to delete
+}
+
+// Entities related to TimesheetApprove
+
+type ApproveTimesheetParams struct {
+	UserParams
+	TSID             string
+	ApprovedByUserId string
+	Approved         time.Time // optional, defaults to now if zero
+	Complete         time.Time // optional, defaults to now if zero
+	Date             string    // optional YYYY-MM-DD
+	Notes            string    // optional
+	JobCode          string    // optional
+}
+
+type approveTimesheetXmlResponse struct {
+	XMLName       xml.Name `xml:"Envelope"`
+	Text          string   `xml:",chardata"`
+	EncodingStyle string   `xml:"encodingStyle,attr"`
+	SOAPENV       string   `xml:"SOAP-ENV,attr"`
+	Xsd           string   `xml:"xsd,attr"`
+	Xsi           string   `xml:"xsi,attr"`
+	SOAPENC       string   `xml:"SOAP-ENC,attr"`
+	Tns           string   `xml:"tns,attr"`
+	Body          struct {
+		Text                      string `xml:",chardata"`
+		TimesheetApproveResponse struct {
+			Text     string `xml:",chardata"`
+			Ns1      string `xml:"ns1,attr"`
+			ParmsOut struct {
+				Text       string `xml:",chardata"`
+				Type       string `xml:"type,attr"`
+				ResultCode struct {
+					Text string `xml:",chardata"`
+					Type string `xml:"type,attr"`
+				} `xml:"ResultCode"`
+				Results struct {
+					Text string `xml:",chardata"`
+					Type string `xml:"type,attr"`
+				} `xml:"Results"`
+			} `xml:"parms_out"`
+		} `xml:"TimesheetApproveResponse"`
+	} `xml:"Body"`
+}
+
+type deleteTimesheetShiftXmlResponse struct {
+	XMLName       xml.Name `xml:"Envelope"`
+	Text          string   `xml:",chardata"`
+	EncodingStyle string   `xml:"encodingStyle,attr"`
+	SOAPENV       string   `xml:"SOAP-ENV,attr"`
+	Xsd           string   `xml:"xsd,attr"`
+	Xsi           string   `xml:"xsi,attr"`
+	SOAPENC       string   `xml:"SOAP-ENC,attr"`
+	Tns           string   `xml:"tns,attr"`
+	Body          struct {
+		Text                         string `xml:",chardata"`
+		TimesheetDeleteShiftResponse struct {
+			Text     string `xml:",chardata"`
+			Ns1      string `xml:"ns1,attr"`
+			ParmsOut struct {
+				Text       string `xml:",chardata"`
+				Type       string `xml:"type,attr"`
+				ResultCode struct {
+					Text string `xml:",chardata"`
+					Type string `xml:"type,attr"`
+				} `xml:"ResultCode"`
+				Results struct {
+					Text string `xml:",chardata"`
+					Type string `xml:"type,attr"`
+				} `xml:"Results"`
+			} `xml:"parms_out"`
+		} `xml:"TimesheetDeleteShiftResponse"`
+	} `xml:"Body"`
 }
