@@ -357,6 +357,131 @@ func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetR
 	return res, nil
 }
 
+func (c astuteClient) AddTimesheetShift(params *AddTimesheetShiftParams) (AddTimesheetShiftResponse, error) {
+	var res AddTimesheetShiftResponse
+
+	reqTemplate := strings.TrimSpace(
+		`<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="urn:tsoIntegrator" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<soap:Body>
+<q1:TimesheetAddShift xmlns:q1="urn:TimesheetAddShift">
+  <tns:timesheetAddShift>
+    <api_key>{{.ApiKey}}</api_key>
+    <api_username>{{.ApiUsername}}</api_username>
+    <api_password>{{.ApiPassword}}</api_password>
+    <api_transaction_id>{{.ApiTransactionId}}</api_transaction_id>
+    <TSID>{{.TSID}}</TSID>
+    {{if .UID}}<UID>{{.UID}}</UID>{{end}}
+    {{if .UserId}}<user_id>{{.UserId}}</user_id>{{end}}
+    <date>{{.Date}}</date>
+    <start>{{.StartTime}}</start>
+    {{if .EndTime}}<finish>{{.EndTime}}</finish>{{end}}
+    {{if .BreakStart}}<break_start>{{.BreakStart}}</break_start>{{end}}
+    {{if .BreakFinish}}<break_finish>{{.BreakFinish}}</break_finish>{{end}}
+    {{if .Break2Start}}<break2_start>{{.Break2Start}}</break2_start>{{end}}
+    {{if .Break2Finish}}<break2_finish>{{.Break2Finish}}</break2_finish>{{end}}
+    {{if .Break3Start}}<break3_start>{{.Break3Start}}</break3_start>{{end}}
+    {{if .Break3Finish}}<break3_finish>{{.Break3Finish}}</break3_finish>{{end}}
+    {{if .BreakTime}}<break>{{.BreakTime}}</break>{{end}}
+    {{if .Notes}}<notes>{{.Notes}}</notes>{{end}}
+    {{if .JobCode}}<job_code>{{.JobCode}}</job_code>{{end}}
+  </tns:timesheetAddShift>
+</q1:TimesheetAddShift>
+</soap:Body>
+</soap:Envelope>`,
+	)
+
+	notesBuf := new(bytes.Buffer)
+	_ = xml.EscapeText(notesBuf, []byte(params.Notes))
+
+	templateData := struct {
+		AuthParams
+		UserParams
+		TSID             string
+		ApiTransactionId string
+		Date             string
+		StartTime        string
+		EndTime          string
+		BreakStart       string
+		BreakFinish      string
+		Break2Start      string
+		Break2Finish     string
+		Break3Start      string
+		Break3Finish     string
+		BreakTime        string
+		Notes            string
+		JobCode          string
+	}{
+		AuthParams:       c.AuthParams,
+		UserParams:       params.UserParams,
+		TSID:             params.TSID,
+		ApiTransactionId: uuid.New().String(),
+		Date:             params.Date.Format("2006-01-02"),
+		StartTime:        formatTimeHHMM(params.StartTime),
+		EndTime:          formatTimeHHMM(params.EndTime),
+		BreakStart:       formatTimeHHMM(params.BreakStart),
+		BreakFinish:      formatTimeHHMM(params.BreakFinish),
+		Break2Start:      formatTimeHHMM(params.Break2Start),
+		Break2Finish:     formatTimeHHMM(params.Break2Finish),
+		Break3Start:      formatTimeHHMM(params.Break3Start),
+		Break3Finish:     formatTimeHHMM(params.Break3Finish),
+		BreakTime:        padBreakTime(params.BreakTime),
+		Notes:            notesBuf.String(),
+		JobCode:          params.JobCode,
+	}
+
+	resp, err := c.B.Call(c.AuthParams.ApiUrl, "TimesheetAddShift", "urn:TimesheetAddShift", reqTemplate, templateData)
+	if err != nil {
+		return res, err
+	}
+
+	if resp.Code != http.StatusOK {
+		result, err := ParseResponse(resp.Data, faultResponse{})
+		if err != nil {
+			return res, nil
+		}
+		return res, fmt.Errorf("%s", result.Body.Fault.Faultstring.Text)
+	}
+
+	result, err := ParseResponse(resp.Data, addTimesheetShiftXmlResponse{})
+	if err != nil {
+		return res, nil
+	}
+
+	res = AddTimesheetShiftResponse{
+		Result: result.Body.TimesheetAddShiftResponse.ParmsOut.Results.Text,
+	}
+
+	return res, nil
+}
+
+// Formats a time.Time as a 4-character HHMM string, or empty if t is zero.
+// Astute expects shift start/finish times in this packed format.
+func formatTimeHHMM(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+	return t.Format("1504")
+}
+
+// Left-pads a break-duration string to exactly 4 characters as required by Astute.
+// An empty input is preserved as empty so the template can omit the tag.
+func padBreakTime(bt string) string {
+	switch len(bt) {
+	case 0:
+		return ""
+	case 1:
+		return "000" + bt
+	case 2:
+		return "00" + bt
+	case 3:
+		return "0" + bt
+	case 4:
+		return bt
+	default:
+		return "0000"
+	}
+}
+
 // Helps in identifying the weekday for the given time
 func getWeekdayTemplateForTime(startTime time.Time) string {
 	weekDay := startTime.Weekday()

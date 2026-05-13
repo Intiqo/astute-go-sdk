@@ -8,7 +8,7 @@ import (
 type PayrollEntity interface {
 	faultResponse | queryUserXmlResponse | QueryUserResponse |
 		queryTimesheetXmlResponse | QueryTimesheetResponse |
-		saveTimesheetXmlResponse
+		saveTimesheetXmlResponse | addTimesheetShiftXmlResponse
 }
 
 type faultResponse struct {
@@ -573,4 +573,57 @@ type SubmitTimesheetParams struct {
 	TSID           string
 	StartTime      time.Time
 	SubmissionTime time.Time
+}
+
+// Entities related to AddTimesheetShift
+
+type AddTimesheetShiftParams struct {
+	UserParams
+	TSID         string
+	Date         time.Time
+	StartTime    time.Time
+	EndTime      time.Time
+	BreakStart   time.Time
+	BreakFinish  time.Time
+	Break2Start  time.Time
+	Break2Finish time.Time
+	Break3Start  time.Time
+	Break3Finish time.Time
+	BreakTime    string
+	Notes        string
+	JobCode      string
+}
+
+type addTimesheetShiftXmlResponse struct {
+	XMLName       xml.Name `xml:"Envelope"`
+	Text          string   `xml:",chardata"`
+	EncodingStyle string   `xml:"encodingStyle,attr"`
+	SOAPENV       string   `xml:"SOAP-ENV,attr"`
+	Xsd           string   `xml:"xsd,attr"`
+	Xsi           string   `xml:"xsi,attr"`
+	SOAPENC       string   `xml:"SOAP-ENC,attr"`
+	Tns           string   `xml:"tns,attr"`
+	Body          struct {
+		Text                      string `xml:",chardata"`
+		TimesheetAddShiftResponse struct {
+			Text     string `xml:",chardata"`
+			Ns1      string `xml:"ns1,attr"`
+			ParmsOut struct {
+				Text       string `xml:",chardata"`
+				Type       string `xml:"type,attr"`
+				ResultCode struct {
+					Text string `xml:",chardata"`
+					Type string `xml:"type,attr"`
+				} `xml:"ResultCode"`
+				Results struct {
+					Text string `xml:",chardata"`
+					Type string `xml:"type,attr"`
+				} `xml:"Results"`
+			} `xml:"parms_out"`
+		} `xml:"TimesheetAddShiftResponse"`
+	} `xml:"Body"`
+}
+
+type AddTimesheetShiftResponse struct {
+	Result string
 }

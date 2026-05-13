@@ -29,6 +29,10 @@ type Client interface {
 	// Creates a new timesheet if none exists for the corresponding time period
 	//
 	SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetResponse, error)
+	// AddTimesheetShift ... Add a shift to an existing timesheet
+	//
+	// See https://api.astutepayroll.com/webservice/documentation/#type_TimesheetAddShift
+	AddTimesheetShift(params *AddTimesheetShiftParams) (AddTimesheetShiftResponse, error)
 }
 
 func NewClient(params AuthParams) (Client, error) {
