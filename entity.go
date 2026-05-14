@@ -509,8 +509,14 @@ type QueryTimesheetResponse struct {
 type SaveTimesheetDayParams struct {
 	StartTime time.Time
 	EndTime   time.Time
+	// BreakTime is the canonical Astute HHMM-format break-duration string (e.g. "0030"
+	// for 30 minutes, "0100" for 1 hour). Empty / zero values are padded to "0000".
 	BreakTime string
-	Notes     string
+	// BreakStart / BreakFinish, when both non-zero, are emitted as Astute's
+	// <{wd}_break_start> / <{wd}_break_finish> tags for the day.
+	BreakStart  time.Time
+	BreakFinish time.Time
+	Notes       string
 }
 
 type SaveTimesheetParams struct {
@@ -525,11 +531,13 @@ type SaveTimesheetParams struct {
 }
 
 type SaveTimesheetDayTemplateParams struct {
-	WeekdayTag string
-	StartTime  string
-	EndTime    string
-	BreakTime  string
-	Notes      string
+	WeekdayTag  string
+	StartTime   string
+	EndTime     string
+	BreakTime   string
+	BreakStart  string
+	BreakFinish string
+	Notes       string
 }
 
 type saveTimesheetXmlResponse struct {

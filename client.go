@@ -237,6 +237,8 @@ func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetR
 			<{{.WeekdayTag}}_start>{{.StartTime}}</{{.WeekdayTag}}_start>
 			<{{.WeekdayTag}}_finish>{{.EndTime}}</{{.WeekdayTag}}_finish>
 			<{{.WeekdayTag}}_break>{{.BreakTime}}</{{.WeekdayTag}}_break>
+			{{if .BreakStart}}<{{.WeekdayTag}}_break_start>{{.BreakStart}}</{{.WeekdayTag}}_break_start>{{end}}
+			{{if .BreakFinish}}<{{.WeekdayTag}}_break_finish>{{.BreakFinish}}</{{.WeekdayTag}}_break_finish>{{end}}
 			<{{.WeekdayTag}}_notes>{{.Notes}}</{{.WeekdayTag}}_notes>
 		{{end}}
 		{{if .Notes}}<notes>{{.Notes}}</notes>{{end}}
@@ -288,11 +290,13 @@ func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetR
 			buf := new(bytes.Buffer)
 			_ = xml.EscapeText(buf, []byte(day.Notes))
 			days = append(days, SaveTimesheetDayTemplateParams{
-				WeekdayTag: getWeekdayTemplateForTime(day.StartTime),
-				StartTime:  startTime,
-				EndTime:    endTime,
-				BreakTime:  breakTime,
-				Notes:      buf.String(),
+				WeekdayTag:  getWeekdayTemplateForTime(day.StartTime),
+				StartTime:   startTime,
+				EndTime:     endTime,
+				BreakTime:   breakTime,
+				BreakStart:  formatTimeHHMM(day.BreakStart),
+				BreakFinish: formatTimeHHMM(day.BreakFinish),
+				Notes:       buf.String(),
 			})
 
 			if day.StartTime.Before(tsStartTime) {
