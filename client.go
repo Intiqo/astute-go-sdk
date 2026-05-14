@@ -457,11 +457,39 @@ func (c astuteClient) AddTimesheetShift(params *AddTimesheetShiftParams) (AddTim
 		return res, nil
 	}
 
+	resultCode := strings.TrimSpace(result.Body.TimesheetAddShiftResponse.ParmsOut.ResultCode.Text)
+	resultsText := strings.TrimSpace(result.Body.TimesheetAddShiftResponse.ParmsOut.Results.Text)
+
+	// Astute returns a 200 even when the operation fails (e.g. "This shift conflicts with
+	// another shift…"). Surface those as errors so callers don't proceed as if the shift saved.
+	// We check both ResultCode (non-"S" indicates failure) and known failure phrases in Results.
+	if isAddTimesheetShiftFailure(resultCode, resultsText) {
+		return res, fmt.Errorf("%s", resultsText)
+	}
+
 	res = AddTimesheetShiftResponse{
-		Result: result.Body.TimesheetAddShiftResponse.ParmsOut.Results.Text,
+		Result: resultsText,
 	}
 
 	return res, nil
+}
+
+func isAddTimesheetShiftFailure(resultCode, resultsText string) bool {
+	if resultCode != "" && !strings.EqualFold(resultCode, "S") {
+		return true
+	}
+	lower := strings.ToLower(resultsText)
+	failurePhrases := []string{
+		"cannot be saved",
+		"please check your data",
+		"conflicts with",
+	}
+	for _, p := range failurePhrases {
+		if strings.Contains(lower, p) {
+			return true
+		}
+	}
+	return false
 }
 
 // Formats a time.Time as a 4-character HHMM string, or empty if t is zero.
