@@ -253,7 +253,13 @@ func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetR
 		)
 
 		days := make([]SaveTimesheetDayTemplateParams, 0)
-		tsStartTime := params.Days[0].StartTime
+		// Days may be empty when the caller only wants to submit (Submit=true) or update notes
+		// on a timesheet whose entries were already populated by AddTimesheetShift. In that case
+		// we use SubmissionTime (or now) for the <date> field instead of indexing Days[0].
+		var tsStartTime time.Time
+		if len(params.Days) > 0 {
+			tsStartTime = params.Days[0].StartTime
+		}
 		for _, day := range params.Days {
 			// Astute strictly requires that the start and end times be represented through 4 characters
 			// in the format HHMM. If the time is less than 4 characters, we need to pad it with 0s.
@@ -297,6 +303,10 @@ func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetR
 		submissionTime := time.Now()
 		if params.Submit && !params.SubmissionTime.IsZero() {
 			submissionTime = params.SubmissionTime
+		}
+
+		if tsStartTime.IsZero() {
+			tsStartTime = submissionTime
 		}
 
 		templateData := struct {
