@@ -33,6 +33,12 @@ type Client interface {
 	//
 	// See https://api.astutepayroll.com/webservice/documentation/#type_TimesheetAddShift
 	AddTimesheetShift(params *AddTimesheetShiftParams) (AddTimesheetShiftResponse, error)
+	// DeleteTimesheetShift ... Delete a shift previously added via AddTimesheetShift
+	//
+	// Identified by TS_SID (shift ID returned by AddTimesheetShift) and TSID (timesheet ID).
+	//
+	// See https://api.astutepayroll.com/webservice/documentation/#type_TimesheetDeleteShift
+	DeleteTimesheetShift(params *DeleteTimesheetShiftParams) (DeleteTimesheetShiftResponse, error)
 }
 
 func NewClient(params AuthParams) (Client, error) {

@@ -8,7 +8,8 @@ import (
 type PayrollEntity interface {
 	faultResponse | queryUserXmlResponse | QueryUserResponse |
 		queryTimesheetXmlResponse | QueryTimesheetResponse |
-		saveTimesheetXmlResponse | addTimesheetShiftXmlResponse
+		saveTimesheetXmlResponse | addTimesheetShiftXmlResponse |
+		deleteTimesheetShiftXmlResponse
 }
 
 type faultResponse struct {
@@ -633,5 +634,54 @@ type addTimesheetShiftXmlResponse struct {
 }
 
 type AddTimesheetShiftResponse struct {
+	Result string
+	// TSSID is the shift identifier Astute assigns to a successfully-added shift.
+	// Parsed from the Results text ("Saved timesheet Shift TS_SID: NNNN for TSID:HMMM ()").
+	// Callers can store this and pass it to DeleteTimesheetShift to remove the shift later
+	// (e.g. when an edit needs to replace it via a delete-then-add flow).
+	TSSID string
+}
+
+// Entities related to DeleteTimesheetShift
+
+type DeleteTimesheetShiftParams struct {
+	UserParams
+	// TSID is the timesheet identifier (HXXXX-style).
+	TSID string
+	// TSSID is the shift identifier (from AddTimesheetShiftResponse.TSSID).
+	TSSID string
+}
+
+type deleteTimesheetShiftXmlResponse struct {
+	XMLName       xml.Name `xml:"Envelope"`
+	Text          string   `xml:",chardata"`
+	EncodingStyle string   `xml:"encodingStyle,attr"`
+	SOAPENV       string   `xml:"SOAP-ENV,attr"`
+	Xsd           string   `xml:"xsd,attr"`
+	Xsi           string   `xml:"xsi,attr"`
+	SOAPENC       string   `xml:"SOAP-ENC,attr"`
+	Tns           string   `xml:"tns,attr"`
+	Body          struct {
+		Text                         string `xml:",chardata"`
+		TimesheetDeleteShiftResponse struct {
+			Text     string `xml:",chardata"`
+			Ns1      string `xml:"ns1,attr"`
+			ParmsOut struct {
+				Text       string `xml:",chardata"`
+				Type       string `xml:"type,attr"`
+				ResultCode struct {
+					Text string `xml:",chardata"`
+					Type string `xml:"type,attr"`
+				} `xml:"ResultCode"`
+				Results struct {
+					Text string `xml:",chardata"`
+					Type string `xml:"type,attr"`
+				} `xml:"Results"`
+			} `xml:"parms_out"`
+		} `xml:"TimesheetDeleteShiftResponse"`
+	} `xml:"Body"`
+}
+
+type DeleteTimesheetShiftResponse struct {
 	Result string
 }

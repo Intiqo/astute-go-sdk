@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -473,9 +474,23 @@ func (c astuteClient) AddTimesheetShift(params *AddTimesheetShiftParams) (AddTim
 
 	res = AddTimesheetShiftResponse{
 		Result: resultsText,
+		TSSID:  parseTSSID(resultsText),
 	}
 
 	return res, nil
+}
+
+// parseTSSID extracts the shift identifier from a successful AddTimesheetShift response.
+// The success message follows the pattern "Saved timesheet Shift TS_SID: 6672 for TSID:HMMM ()".
+// Returns "" if no TS_SID can be parsed (e.g. unexpected response shape).
+var tsSIDPattern = regexp.MustCompile(`TS_SID:\s*(\d+)`)
+
+func parseTSSID(resultsText string) string {
+	m := tsSIDPattern.FindStringSubmatch(resultsText)
+	if len(m) < 2 {
+		return ""
+	}
+	return m[1]
 }
 
 func isAddTimesheetShiftFailure(resultsText string) bool {
@@ -491,6 +506,68 @@ func isAddTimesheetShiftFailure(resultsText string) bool {
 		}
 	}
 	return false
+}
+
+func (c astuteClient) DeleteTimesheetShift(params *DeleteTimesheetShiftParams) (DeleteTimesheetShiftResponse, error) {
+	var res DeleteTimesheetShiftResponse
+
+	reqTemplate := strings.TrimSpace(
+		`<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="urn:tsoIntegrator" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<soap:Body>
+<q1:TimesheetDeleteShift xmlns:q1="urn:TimesheetDeleteShift">
+  <tns:timesheetDeleteShift>
+    <api_key>{{.ApiKey}}</api_key>
+    <api_username>{{.ApiUsername}}</api_username>
+    <api_password>{{.ApiPassword}}</api_password>
+    <api_transaction_id>{{.ApiTransactionId}}</api_transaction_id>
+    <TS_SID>{{.TSSID}}</TS_SID>
+    <TSID>{{.TSID}}</TSID>
+  </tns:timesheetDeleteShift>
+</q1:TimesheetDeleteShift>
+</soap:Body>
+</soap:Envelope>`,
+	)
+
+	templateData := struct {
+		AuthParams
+		TSID             string
+		TSSID            string
+		ApiTransactionId string
+	}{
+		AuthParams:       c.AuthParams,
+		TSID:             params.TSID,
+		TSSID:            params.TSSID,
+		ApiTransactionId: uuid.New().String(),
+	}
+
+	resp, err := c.B.Call(c.AuthParams.ApiUrl, "TimesheetDeleteShift", "urn:TimesheetDeleteShift", reqTemplate, templateData)
+	if err != nil {
+		return res, err
+	}
+
+	if resp.Code != http.StatusOK {
+		result, err := ParseResponse(resp.Data, faultResponse{})
+		if err != nil {
+			return res, nil
+		}
+		return res, fmt.Errorf("%s", result.Body.Fault.Faultstring.Text)
+	}
+
+	result, err := ParseResponse(resp.Data, deleteTimesheetShiftXmlResponse{})
+	if err != nil {
+		return res, nil
+	}
+
+	resultsText := strings.TrimSpace(result.Body.TimesheetDeleteShiftResponse.ParmsOut.Results.Text)
+
+	// Same approach as AddTimesheetShift: Astute returns HTTP 200 even when the operation
+	// fails (e.g. "shift not found"). Treat the same set of failure phrases as errors.
+	if isAddTimesheetShiftFailure(resultsText) {
+		return res, fmt.Errorf("%s", resultsText)
+	}
+
+	res = DeleteTimesheetShiftResponse{Result: resultsText}
+	return res, nil
 }
 
 // Formats a time.Time as a 4-character HHMM string, or empty if t is zero.
