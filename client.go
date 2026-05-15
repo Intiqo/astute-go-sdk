@@ -508,6 +508,77 @@ func isAddTimesheetShiftFailure(resultsText string) bool {
 	return false
 }
 
+// ListTimesheetShifts returns the TS_SID of every shift recorded on the given
+// timesheet. Backed by TimesheetQueryShift, which (unlike TimesheetSave) returns
+// per-shift identifiers regardless of how each shift was created — so this works
+// for shifts originally written via TimesheetSave's weekday-tag form as well as
+// those added via TimesheetAddShift.
+//
+// The Astute Results payload format isn't formally documented; we extract TS_SID
+// values with a permissive regex that tolerates either XML elements (<TS_SID>123)
+// or free-text "TS_SID: 123". Returns an empty slice (not an error) when the
+// timesheet has no shifts.
+func (c astuteClient) ListTimesheetShifts(tsid string) ([]string, error) {
+	reqTemplate := strings.TrimSpace(
+		`<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="urn:tsoIntegrator" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<soap:Body>
+<q1:TimesheetQueryShift xmlns:q1="urn:TimesheetQueryShift">
+  <tns:userGet>
+    <api_key>{{.ApiKey}}</api_key>
+    <api_username>{{.ApiUsername}}</api_username>
+    <api_password>{{.ApiPassword}}</api_password>
+    <query>TSID = '{{.TSID}}'</query>
+  </tns:userGet>
+</q1:TimesheetQueryShift>
+</soap:Body>
+</soap:Envelope>`,
+	)
+
+	templateData := struct {
+		AuthParams
+		TSID string
+	}{
+		AuthParams: c.AuthParams,
+		TSID:       tsid,
+	}
+
+	resp, err := c.B.Call(c.AuthParams.ApiUrl, "TimesheetQueryShift", "urn:TimesheetQueryShift", reqTemplate, templateData)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.Code != http.StatusOK {
+		result, err := ParseResponse(resp.Data, faultResponse{})
+		if err != nil {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("%s", result.Body.Fault.Faultstring.Text)
+	}
+
+	// The response wrapper is the standard <Body><FooResponse><parms_out><Results>...
+	// pattern. Extract TS_SIDs from the raw response body — this avoids depending on
+	// the inner XML shape, which the Astute docs don't pin down for TimesheetQueryShift.
+	matches := tsSIDListPattern.FindAllStringSubmatch(string(resp.Data), -1)
+	if len(matches) == 0 {
+		return []string{}, nil
+	}
+	seen := make(map[string]bool, len(matches))
+	out := make([]string, 0, len(matches))
+	for _, m := range matches {
+		if len(m) < 2 || seen[m[1]] {
+			continue
+		}
+		seen[m[1]] = true
+		out = append(out, m[1])
+	}
+	return out, nil
+}
+
+// tsSIDListPattern matches TS_SID occurrences in either XML element form
+// (<TS_SID>123</TS_SID>) or attribute-style / free-text form (TS_SID: 123,
+// TS_SID="123"). The capture group always isolates the numeric ID.
+var tsSIDListPattern = regexp.MustCompile(`TS_SID[^0-9]*?(\d+)`)
+
 func (c astuteClient) DeleteTimesheetShift(params *DeleteTimesheetShiftParams) (DeleteTimesheetShiftResponse, error) {
 	var res DeleteTimesheetShiftResponse
 
@@ -600,25 +671,27 @@ func padBreakTime(bt string) string {
 
 // Helps in identifying the weekday for the given time
 func getWeekdayTemplateForTime(startTime time.Time) string {
-	weekDay := startTime.Weekday()
-	weekDayTag := ""
-	switch weekDay {
-	case 0:
-		weekDayTag = "sun"
-	case 1:
-		weekDayTag = "mon"
-	case 2:
-		weekDayTag = "tue"
-	case 3:
-		weekDayTag = "wed"
-	case 4:
-		weekDayTag = "thu"
-	case 5:
-		weekDayTag = "fri"
-	case 6:
-		weekDayTag = "sat"
-	default:
-	}
+	return weekdayTag(startTime.Weekday())
+}
 
-	return weekDayTag
+// weekdayTag maps a time.Weekday to Astute's 3-letter prefix used in
+// TimesheetSave day tags (mon_start, tue_start, ...).
+func weekdayTag(wd time.Weekday) string {
+	switch wd {
+	case time.Sunday:
+		return "sun"
+	case time.Monday:
+		return "mon"
+	case time.Tuesday:
+		return "tue"
+	case time.Wednesday:
+		return "wed"
+	case time.Thursday:
+		return "thu"
+	case time.Friday:
+		return "fri"
+	case time.Saturday:
+		return "sat"
+	}
+	return ""
 }

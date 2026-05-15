@@ -39,6 +39,14 @@ type Client interface {
 	//
 	// See https://api.astutepayroll.com/webservice/documentation/#type_TimesheetDeleteShift
 	DeleteTimesheetShift(params *DeleteTimesheetShiftParams) (DeleteTimesheetShiftResponse, error)
+	// ListTimesheetShifts ... List every shift currently recorded on a timesheet, returning
+	// the TS_SID of each. Useful when re-emitting a group through TimesheetAddShift after
+	// the timesheet was previously populated via TimesheetSave's weekday-tag form: those
+	// day-level entries are otherwise un-addressable for delete (no TS_SID is returned by
+	// TimesheetSave). Pair with DeleteTimesheetShift to wipe a timesheet before re-adding.
+	//
+	// See https://api.astutepayroll.com/webservice/documentation/#method_TimesheetQueryShift
+	ListTimesheetShifts(tsid string) ([]string, error)
 }
 
 func NewClient(params AuthParams) (Client, error) {
