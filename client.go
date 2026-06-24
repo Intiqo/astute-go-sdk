@@ -310,6 +310,14 @@ func (c astuteClient) SaveTimesheet(params *SaveTimesheetParams) (SaveTimesheetR
 			submissionTime = params.SubmissionTime
 		}
 
+		// Prefer an explicitly-supplied period date for the <date> tag. This matters for
+		// empty-Days submits (timesheets populated via AddTimesheetShift): without it
+		// <date> would fall back to the submission timestamp, which can sit outside the
+		// pay period and prevent <complete> from finalizing the right timesheet.
+		if !params.TimesheetDate.IsZero() {
+			tsStartTime = params.TimesheetDate
+		}
+
 		if tsStartTime.IsZero() {
 			tsStartTime = submissionTime
 		}

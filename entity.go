@@ -522,8 +522,16 @@ type SaveTimesheetDayParams struct {
 
 type SaveTimesheetParams struct {
 	UserParams
-	TSID                 string
-	Days                 []SaveTimesheetDayParams
+	TSID string
+	Days []SaveTimesheetDayParams
+	// TimesheetDate is the calendar date for the start of the timesheet period (Astute's
+	// <date> field). When set it is used verbatim; otherwise <date> is derived from the
+	// earliest day in Days, falling back to the submission time. Callers submitting a
+	// timesheet whose entries were populated via AddTimesheetShift (empty Days) MUST set
+	// this so <date> anchors the correct pay period — without it the submit falls back to
+	// the submission timestamp's date, which can land outside the period and leave the
+	// timesheet at "Pending Submission" on Astute.
+	TimesheetDate        time.Time
 	DidNotWork           bool
 	Submit               bool
 	SubmissionTime       time.Time
